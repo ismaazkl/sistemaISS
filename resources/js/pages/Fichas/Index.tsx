@@ -1,6 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { Head } from '@inertiajs/react';
-import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { FileText, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import FichaController from '@/actions/App/Http/Controllers/FichaController';
 import ConfirmDialog from '@/components/confirm-dialog';
@@ -28,6 +28,7 @@ import {
     create as fichasCreate,
     edit as fichasEdit,
     index as fichasIndex,
+    pdf as fichasPdf,
 } from '@/routes/fichas';
 import type { CursoOption, FichaFilters, FichaPagination } from '@/types';
 
@@ -164,16 +165,16 @@ export default function FichasIndex({ fichas, cursos, filters }: Props) {
                             <TableRow>
                                 <TableHead>Estudiante</TableHead>
                                 <TableHead className="hidden md:table-cell">
-                                    Cédula
+                                    Cédula del representante
                                 </TableHead>
                                 <TableHead className="hidden lg:table-cell">
                                     Representante
                                 </TableHead>
                                 <TableHead>Curso</TableHead>
                                 <TableHead className="hidden sm:table-cell">
-                                    Fecha
+                                    Fecha / Hora
                                 </TableHead>
-                                <TableHead className="w-20 text-right">
+                                <TableHead className="w-28 text-right">
                                     Acciones
                                 </TableHead>
                             </TableRow>
@@ -187,7 +188,7 @@ export default function FichasIndex({ fichas, cursos, filters }: Props) {
                                     </TableCell>
 
                                     <TableCell className="text-muted-foreground hidden font-mono text-xs md:table-cell">
-                                        {ficha.cedula_estudiante}
+                                        {ficha.cedula_representante}
                                     </TableCell>
 
                                     <TableCell className="text-muted-foreground hidden lg:table-cell">
@@ -200,12 +201,29 @@ export default function FichasIndex({ fichas, cursos, filters }: Props) {
                                         </Badge>
                                     </TableCell>
 
-                                    <TableCell className="text-muted-foreground hidden sm:table-cell">
+                                    <TableCell className="text-muted-foreground hidden whitespace-nowrap sm:table-cell">
                                         {ficha.fecha}
+                                        {ficha.hora ? ` ${ficha.hora}` : ''}
                                     </TableCell>
 
                                     <TableCell>
                                         <div className="flex items-center justify-end gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                aria-label={`Descargar reporte PDF de ${ficha.estudiante}`}
+                                                asChild
+                                            >
+                                                <a
+                                                    href={fichasPdf.url({
+                                                        current_team: teamSlug,
+                                                        ficha: ficha.id,
+                                                    })}
+                                                >
+                                                    <FileText />
+                                                </a>
+                                            </Button>
+
                                             <Button
                                                 variant="ghost"
                                                 size="icon"

@@ -20,12 +20,14 @@ use Illuminate\Support\Carbon;
  * @property string $cedula_representante
  * @property string|null $telefono
  * @property Carbon $fecha
+ * @property string|null $hora
+ * @property string|null $causa_salida
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Team $team
  * @property-read Curso $curso
  */
-#[Fillable(['estudiante', 'representante', 'cedula_estudiante', 'cedula_representante', 'telefono', 'curso_id', 'team_id', 'fecha'])]
+#[Fillable(['estudiante', 'representante', 'cedula_estudiante', 'cedula_representante', 'telefono', 'causa_salida', 'curso_id', 'team_id', 'fecha', 'hora'])]
 class Ficha extends Model
 {
     /** @use HasFactory<FichaFactory> */

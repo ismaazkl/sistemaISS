@@ -10,7 +10,7 @@ import type { CursoOption } from '@/types';
 
 type Props = {
     cursos: CursoOption[];
-    defaults: { fecha: string };
+    defaults: { fecha: string; hora: string };
 };
 
 type TeamProps = {

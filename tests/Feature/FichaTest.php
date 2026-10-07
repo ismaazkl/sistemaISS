@@ -14,7 +14,9 @@ function fichaData(array $overrides = []): array
         'cedula_estudiante' => '1712345678',
         'cedula_representante' => '0912345678',
         'telefono' => '0991234567',
+        'causa_salida' => 'Traslado de domicilio',
         'fecha' => '2026-01-15',
+        'hora' => '08:30',
     ], $overrides);
 }
 
@@ -106,6 +108,7 @@ test('users can open the create form', function () {
             ->component('Fichas/Create')
             ->has('cursos', 1)
             ->where('cursos.0.curso', '1ERO EGB A')
+            ->where('defaults.hora', now()->format('H:i'))
         );
 });
 
@@ -139,7 +142,43 @@ test('users can store a ficha', function () {
 
     expect($ficha->team_id)->toBe($team->id)
         ->and($ficha->curso_id)->toBe($curso->id)
-        ->and($ficha->estudiante)->toBe('Juan Pérez');
+        ->and($ficha->estudiante)->toBe('Juan Pérez')
+        ->and($ficha->causa_salida)->toBe('Traslado de domicilio')
+        ->and($ficha->hora)->toStartWith('08:30');
+});
+
+test('the exit cause and the time are optional', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $curso = Curso::factory()->for($team)->create();
+
+    $this->actingAs($user)
+        ->post(route('fichas.store'), fichaData([
+            'curso_id' => $curso->id,
+            'causa_salida' => null,
+            'hora' => null,
+        ]))
+        ->assertSessionHasNoErrors();
+
+    expect(Ficha::sole()->causa_salida)->toBeNull()
+        ->and(Ficha::sole()->hora)->toBeNull();
+});
+
+test('the time must use the HH:MM format', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $curso = Curso::factory()->for($team)->create();
+
+    $this->actingAs($user)
+        ->post(route('fichas.store'), fichaData([
+            'curso_id' => $curso->id,
+            'hora' => '8:30 am',
+        ]))
+        ->assertSessionHasErrors(['hora' => 'La hora debe tener el formato HH:MM.']);
+
+    expect(Ficha::count())->toBe(0);
 });
 
 test('the ficha belongs to the team from the url and ignores any submitted team', function () {
@@ -303,7 +342,10 @@ test('users can open the edit form of their team', function () {
     $user = User::factory()->create();
     $team = $user->currentTeam;
 
-    $ficha = Ficha::factory()->for($team)->create();
+    $ficha = Ficha::factory()->for($team)->create([
+        'causa_salida' => 'Traslado de domicilio',
+        'hora' => '08:30',
+    ]);
 
     $this->actingAs($user)
         ->get(route('fichas.edit', $ficha))
@@ -311,6 +353,8 @@ test('users can open the edit form of their team', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('Fichas/Edit')
             ->where('ficha.id', $ficha->id)
+            ->where('ficha.hora', '08:30')
+            ->where('ficha.causa_salida', 'Traslado de domicilio')
         );
 });
 
@@ -401,4 +445,70 @@ test('users cannot delete a ficha of another team', function () {
         ->assertNotFound();
 
     expect($ficha->fresh())->not->toBeNull();
+});
+
+test('users can download the pdf report of a ficha of their team', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $ficha = Ficha::factory()->for($team)->create([
+        'estudiante' => 'Juan Pérez',
+        'causa_salida' => 'Traslado de domicilio',
+        'hora' => '08:30',
+    ]);
+
+    $response = $this->actingAs($user)
+        ->get(route('fichas.pdf', $ficha))
+        ->assertOk()
+        ->assertHeader('content-type', 'application/pdf')
+        ->assertDownload('ficha-juan-perez.pdf');
+
+    expect($response->streamedContent())->toStartWith('%PDF');
+});
+
+test('users cannot download the pdf report of a ficha of another team', function () {
+    $user = User::factory()->create();
+    $ficha = Ficha::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('fichas.pdf', $ficha))
+        ->assertNotFound();
+});
+
+test('the pdf report embeds the institutional seal on the top left corner', function () {
+    $user = User::factory()->create();
+    $ficha = Ficha::factory()->for($user->currentTeam)->create();
+
+    $markup = view('fichas.pdf', [
+        'ficha' => $ficha->load('curso'),
+        'team' => $user->currentTeam,
+        'hora' => '08:30',
+        'generatedAt' => now(),
+        'sello' => 'data:image/jpeg;base64,'.base64_encode('seal-bytes'),
+    ])->render();
+
+    expect($markup)
+        ->toContain('class="sello"')
+        ->toContain('src="data:image/jpeg;base64,'.base64_encode('seal-bytes').'"')
+        ->toContain('position: absolute');
+
+    $this->actingAs($user)
+        ->get(route('fichas.pdf', $ficha))
+        ->assertOk()
+        ->assertHeader('content-type', 'application/pdf');
+});
+
+test('the pdf report omits the seal when the image is not readable', function () {
+    $user = User::factory()->create();
+    $ficha = Ficha::factory()->for($user->currentTeam)->create();
+
+    $markup = view('fichas.pdf', [
+        'ficha' => $ficha->load('curso'),
+        'team' => $user->currentTeam,
+        'hora' => '08:30',
+        'generatedAt' => now(),
+        'sello' => null,
+    ])->render();
+
+    expect($markup)->not->toContain('class="sello"');
 });

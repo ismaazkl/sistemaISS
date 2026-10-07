@@ -5,7 +5,9 @@ export type Ficha = {
     cedula_estudiante: string;
     cedula_representante: string;
     telefono: string | null;
+    causa_salida: string | null;
     fecha: string;
+    hora: string | null;
     curso_id: number;
     curso: string | null;
 };

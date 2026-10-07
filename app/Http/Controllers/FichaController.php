@@ -6,11 +6,15 @@ use App\Http\Requests\SaveFichaRequest;
 use App\Models\Curso;
 use App\Models\Ficha;
 use App\Models\Team;
+use Dompdf\Dompdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FichaController extends Controller
 {
@@ -48,7 +52,10 @@ class FichaController extends Controller
 
         return Inertia::render('Fichas/Create', [
             'cursos' => $this->cursos($this->team($request)),
-            'defaults' => ['fecha' => now()->toDateString()],
+            'defaults' => [
+                'fecha' => now()->toDateString(),
+                'hora' => now()->format('H:i'),
+            ],
         ]);
     }
 
@@ -123,6 +130,40 @@ class FichaController extends Controller
     }
 
     /**
+     * Download the given enrolment record as a PDF report.
+     */
+    public function pdf(Request $request): StreamedResponse
+    {
+        $model = $this->findFicha($request);
+
+        Gate::authorize('view', $model);
+
+        $pdf = app(Dompdf::class);
+        $pdf->setPaper('A4', 'portrait');
+        $pdf->loadHtml(
+            view('fichas.pdf', [
+                'ficha' => $model,
+                'team' => $this->team($request),
+                'hora' => $this->hora($model),
+                'generatedAt' => now(),
+                'sello' => $this->sello(),
+            ])->render()
+        );
+        $pdf->render();
+
+        $filename = 'ficha-'.Str::slug($model->estudiante).'.pdf';
+        $content = $pdf->output();
+
+        return response()->streamDownload(
+            function () use ($content): void {
+                echo $content;
+            },
+            $filename,
+            ['Content-Type' => 'application/pdf'],
+        );
+    }
+
+    /**
      * Resolve the current team from the request.
      */
     protected function team(Request $request): Team
@@ -181,7 +222,7 @@ class FichaController extends Controller
     /**
      * Format an enrolment record for the frontend.
      *
-     * @return array{id: int, estudiante: string, representante: string, cedula_estudiante: string, cedula_representante: string, telefono: string|null, fecha: string, curso_id: int, curso: string|null}
+     * @return array{id: int, estudiante: string, representante: string, cedula_estudiante: string, cedula_representante: string, telefono: string|null, causa_salida: string|null, fecha: string, hora: string|null, curso_id: int, curso: string|null}
      */
     protected function serialize(Ficha $ficha): array
     {
@@ -192,9 +233,42 @@ class FichaController extends Controller
             'cedula_estudiante' => $ficha->cedula_estudiante,
             'cedula_representante' => $ficha->cedula_representante,
             'telefono' => $ficha->telefono,
+            'causa_salida' => $ficha->causa_salida,
             'fecha' => $ficha->fecha->toDateString(),
+            'hora' => $this->hora($ficha),
             'curso_id' => $ficha->curso_id,
             'curso' => $ficha->curso->curso,
         ];
+    }
+
+    /**
+     * Get the exit time of the record as a HH:MM string.
+     */
+    protected function hora(Ficha $ficha): ?string
+    {
+        return $ficha->hora !== null
+            ? Carbon::parse($ficha->hora)->format('H:i')
+            : null;
+    }
+
+    /**
+     * Get the institutional seal as an inline data URI.
+     *
+     * Remote resources are disabled on the PDF renderer, so the image is
+     * embedded in the report markup instead of being referenced by URL.
+     */
+    protected function sello(): ?string
+    {
+        $path = public_path('images/sello.jpeg');
+
+        if (! is_readable($path)) {
+            return null;
+        }
+
+        $contents = file_get_contents($path);
+
+        return $contents === false
+            ? null
+            : 'data:image/jpeg;base64,'.base64_encode($contents);
     }
 }

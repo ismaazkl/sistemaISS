@@ -25,7 +25,14 @@ class FichaFactory extends Factory
             'cedula_estudiante' => fake()->unique()->numerify('##########'),
             'cedula_representante' => fake()->numerify('##########'),
             'telefono' => fake()->numerify('09########'),
+            'causa_salida' => fake()->randomElement([
+                'Traslado de domicilio',
+                'Cambio de institución',
+                'Fin del año lectivo',
+                'Motivo económico',
+            ]),
             'fecha' => fake()->dateTimeBetween('-1 year')->format('Y-m-d'),
+            'hora' => fake()->dateTime()->format('H:i'),
         ];
     }
 

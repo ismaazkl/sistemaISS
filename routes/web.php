@@ -23,6 +23,7 @@ Route::prefix('{current_team}')
         Route::get('fichas/create', [FichaController::class, 'create'])->name('fichas.create');
         Route::post('fichas', [FichaController::class, 'store'])->name('fichas.store');
         Route::get('fichas/{ficha}/edit', [FichaController::class, 'edit'])->whereNumber('ficha')->name('fichas.edit');
+        Route::get('fichas/{ficha}/pdf', [FichaController::class, 'pdf'])->whereNumber('ficha')->name('fichas.pdf');
         Route::patch('fichas/{ficha}', [FichaController::class, 'update'])->whereNumber('ficha')->name('fichas.update');
         Route::delete('fichas/{ficha}', [FichaController::class, 'destroy'])->whereNumber('ficha')->name('fichas.destroy');
     });

@@ -32,7 +32,9 @@ class SaveFichaRequest extends FormRequest
             ],
             'cedula_representante' => ['required', 'string', 'digits:10'],
             'telefono' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]{7,15}$/'],
+            'causa_salida' => ['nullable', 'string', 'max:255'],
             'fecha' => ['required', 'date', 'before_or_equal:today'],
+            'hora' => ['nullable', 'date_format:H:i'],
             'curso_id' => [
                 'required',
                 'integer',
@@ -55,7 +57,9 @@ class SaveFichaRequest extends FormRequest
             'cedula_estudiante.unique' => 'Ya existe una ficha con esta cédula.',
             'cedula_representante.digits' => 'La cédula del representante debe tener 10 dígitos.',
             'telefono.regex' => 'El teléfono debe contener entre 7 y 15 dígitos.',
+            'causa_salida.max' => 'La causa o motivo de salida no puede superar los 255 caracteres.',
             'fecha.before_or_equal' => 'La fecha no puede ser futura.',
+            'hora.date_format' => 'La hora debe tener el formato HH:MM.',
             'curso_id.required' => 'Selecciona el curso.',
             'curso_id.exists' => 'El curso seleccionado no es válido.',
         ];
@@ -74,7 +78,9 @@ class SaveFichaRequest extends FormRequest
             'cedula_estudiante' => 'cédula del estudiante',
             'cedula_representante' => 'cédula del representante',
             'telefono' => 'teléfono',
+            'causa_salida' => 'causa o motivo de salida',
             'fecha' => 'fecha',
+            'hora' => 'hora',
             'curso_id' => 'curso',
         ];
     }

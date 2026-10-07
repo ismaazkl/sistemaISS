@@ -7,6 +7,8 @@ use App\Models\Ficha;
 use App\Policies\CursoPolicy;
 use App\Policies\FichaPolicy;
 use Carbon\CarbonImmutable;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -30,6 +32,29 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configurePolicies();
+        $this->configurePdfRenderer();
+    }
+
+    /**
+     * Register the PDF renderer used by the reports.
+     *
+     * Remote resources and active content stay disabled because the report
+     * markup is built from user provided data, so it must never reach out to
+     * external servers nor execute embedded code.
+     */
+    protected function configurePdfRenderer(): void
+    {
+        $this->app->singleton(Dompdf::class, function (): Dompdf {
+            $options = new Options([
+                'isRemoteEnabled' => false,
+                'isJavascriptEnabled' => false,
+                'isPhpEnabled' => false,
+                'defaultFont' => 'DejaVu Sans',
+                'defaultPaperSize' => 'a4',
+            ]);
+
+            return new Dompdf($options);
+        });
     }
 
     /**

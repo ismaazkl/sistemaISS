@@ -18,7 +18,9 @@ type Props = {
         cedula_estudiante?: string;
         cedula_representante?: string;
         telefono?: string | null;
+        causa_salida?: string | null;
         fecha?: string;
+        hora?: string | null;
         curso_id?: number | string;
     };
     errors?: Record<string, string | undefined>;
@@ -137,6 +139,35 @@ export default function FichaFormFields({
                     />
 
                     <InputError message={errors.fecha} />
+                </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-2">
+                    <Label htmlFor="hora">Hora</Label>
+
+                    <Input
+                        id="hora"
+                        name="hora"
+                        type="time"
+                        defaultValue={values.hora ?? ''}
+                    />
+
+                    <InputError message={errors.hora} />
+                </div>
+
+                <div className="grid gap-2">
+                    <Label htmlFor="causa_salida">Causa/Motivo de Salida</Label>
+
+                    <Input
+                        id="causa_salida"
+                        name="causa_salida"
+                        defaultValue={values.causa_salida ?? ''}
+                        placeholder="Motivo de la salida"
+                        maxLength={255}
+                    />
+
+                    <InputError message={errors.causa_salida} />
                 </div>
             </div>
 
