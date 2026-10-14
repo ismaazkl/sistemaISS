@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\TeamRole;
+use App\Models\Ficha;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
@@ -132,4 +133,64 @@ test('dashboard does not include or delete other users invitations', function ()
     $this->assertDatabaseHas('team_invitations', [
         'id' => $invitation->id,
     ]);
+});
+
+test('dashboard groups the fichas by day with the most recent day first', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    Ficha::factory()->for($team)->create([
+        'fecha' => '2026-10-10',
+        'hora' => '08:30',
+        'estudiante' => 'Ana Día Diez',
+    ]);
+
+    Ficha::factory()->for($team)->create([
+        'fecha' => '2026-10-12',
+        'hora' => '09:15',
+        'estudiante' => 'Beto Día Doce',
+    ]);
+
+    Ficha::factory()->for($team)->create([
+        'fecha' => '2026-10-12',
+        'hora' => '10:00',
+        'estudiante' => 'Carla Día Doce',
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('dashboard'));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('dashboard')
+        ->has('fichasPorDia', 2)
+        ->where('fichasPorDia.0.fecha', '2026-10-12')
+        ->where('fichasPorDia.0.total', 2)
+        ->where('fichasPorDia.1.fecha', '2026-10-10')
+        ->where('fichasPorDia.1.total', 1)
+        ->where('fichasPorDia.1.fichas.0.hora', '08:30')
+        ->missing('recentFichas'),
+    );
+});
+
+test('dashboard limits the day groups to the seven most recent days', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    for ($i = 0; $i < 9; $i++) {
+        Ficha::factory()->for($team)->create([
+            'fecha' => now()->subDays($i)->toDateString(),
+        ]);
+    }
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('dashboard'));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('dashboard')
+        ->has('fichasPorDia', 7),
+    );
 });

@@ -160,21 +160,20 @@ export default function FichasIndex({ fichas, cursos, filters }: Props) {
                 </div>
 
                 <div className="overflow-hidden rounded-lg border">
-                    <Table>
+                    <Table className="text-xs">
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Estudiante</TableHead>
-                                <TableHead className="hidden md:table-cell">
-                                    Cédula del representante
+                                <TableHead className="px-3">
+                                    Estudiante
                                 </TableHead>
-                                <TableHead className="hidden lg:table-cell">
+                                <TableHead className="hidden px-3 lg:table-cell">
                                     Representante
                                 </TableHead>
-                                <TableHead>Curso</TableHead>
-                                <TableHead className="hidden sm:table-cell">
-                                    Fecha / Hora
+                                <TableHead className="px-3">Curso</TableHead>
+                                <TableHead className="hidden px-3 sm:table-cell">
+                                    Fecha y hora
                                 </TableHead>
-                                <TableHead className="w-28 text-right">
+                                <TableHead className="bg-background sticky right-0 z-10 w-28 border-l px-3 text-right">
                                     Acciones
                                 </TableHead>
                             </TableRow>
@@ -182,35 +181,40 @@ export default function FichasIndex({ fichas, cursos, filters }: Props) {
 
                         <TableBody>
                             {fichas.data.map((ficha) => (
-                                <TableRow key={ficha.id}>
-                                    <TableCell className="font-medium">
-                                        {ficha.estudiante}
+                                <TableRow key={ficha.id} className="group">
+                                    <TableCell className="px-3">
+                                        <span className="font-medium">
+                                            {ficha.estudiante}
+                                        </span>
+                                        <span className="text-muted-foreground block font-mono text-[11px]">
+                                            {ficha.cedula_estudiante}
+                                        </span>
                                     </TableCell>
 
-                                    <TableCell className="text-muted-foreground hidden font-mono text-xs md:table-cell">
-                                        {ficha.cedula_representante}
+                                    <TableCell className="hidden px-3 lg:table-cell">
+                                        <span>{ficha.representante}</span>
+                                        <span className="text-muted-foreground block font-mono text-[11px]">
+                                            {ficha.cedula_representante}
+                                        </span>
                                     </TableCell>
 
-                                    <TableCell className="text-muted-foreground hidden lg:table-cell">
-                                        {ficha.representante}
-                                    </TableCell>
-
-                                    <TableCell>
+                                    <TableCell className="px-3">
                                         <Badge variant="secondary">
                                             {ficha.curso ?? '—'}
                                         </Badge>
                                     </TableCell>
 
-                                    <TableCell className="text-muted-foreground hidden whitespace-nowrap sm:table-cell">
+                                    <TableCell className="text-muted-foreground hidden px-3 whitespace-nowrap sm:table-cell">
                                         {ficha.fecha}
                                         {ficha.hora ? ` ${ficha.hora}` : ''}
                                     </TableCell>
 
-                                    <TableCell>
-                                        <div className="flex items-center justify-end gap-1">
+                                    <TableCell className="bg-background group-hover:bg-muted sticky right-0 z-10 border-l px-2 text-right">
+                                        <div className="flex items-center justify-end gap-0.5">
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
+                                                className="size-8"
                                                 aria-label={`Descargar reporte PDF de ${ficha.estudiante}`}
                                                 asChild
                                             >
@@ -227,6 +231,7 @@ export default function FichasIndex({ fichas, cursos, filters }: Props) {
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
+                                                className="size-8"
                                                 aria-label={`Editar ficha de ${ficha.estudiante}`}
                                                 asChild
                                             >
@@ -254,7 +259,7 @@ export default function FichasIndex({ fichas, cursos, filters }: Props) {
                                                     variant="ghost"
                                                     size="icon"
                                                     aria-label={`Eliminar ficha de ${ficha.estudiante}`}
-                                                    className="text-destructive hover:text-destructive"
+                                                    className="text-destructive hover:text-destructive size-8"
                                                 >
                                                     <Trash2 />
                                                 </Button>
@@ -267,7 +272,7 @@ export default function FichasIndex({ fichas, cursos, filters }: Props) {
                             {fichas.data.length === 0 ? (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={6}
+                                        colSpan={5}
                                         className="text-muted-foreground h-24 text-center"
                                     >
                                         No hay fichas para mostrar.

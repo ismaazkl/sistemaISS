@@ -6,6 +6,8 @@ use App\Models\Curso;
 use App\Models\Ficha;
 use App\Models\TeamInvitation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -46,18 +48,30 @@ class DashboardController extends Controller
                     ->whereMonth('fecha', now()->month)
                     ->count(),
             ],
-            'recentFichas' => Ficha::query()
+            'fichasPorDia' => Ficha::query()
                 ->with('curso')
                 ->forTeam($team)
                 ->latestFirst()
-                ->limit(8)
+                ->limit(100)
                 ->get()
-                ->map(fn (Ficha $ficha) => [
-                    'id' => $ficha->id,
-                    'estudiante' => $ficha->estudiante,
-                    'curso' => $ficha->curso->curso,
-                    'fecha' => $ficha->fecha->toDateString(),
-                ]),
+                ->groupBy(fn (Ficha $ficha): string => $ficha->fecha->toDateString())
+                ->take(7)
+                ->map(fn (Collection $fichas, string $fecha): array => [
+                    'fecha' => $fecha,
+                    'total' => $fichas->count(),
+                    'fichas' => $fichas
+                        ->map(fn (Ficha $ficha): array => [
+                            'id' => $ficha->id,
+                            'estudiante' => $ficha->estudiante,
+                            'curso' => $ficha->curso->curso,
+                            'hora' => $ficha->hora !== null
+                                ? Carbon::parse($ficha->hora)->format('H:i')
+                                : null,
+                        ])
+                        ->values()
+                        ->all(),
+                ])
+                ->values(),
         ]);
     }
 }

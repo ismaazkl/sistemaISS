@@ -1,5 +1,4 @@
 import { createInertiaApp } from '@inertiajs/react';
-import Sello from '@/components/sello';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
@@ -28,7 +27,6 @@ void createInertiaApp({
     withApp(app) {
         return (
             <TooltipProvider delayDuration={0}>
-                <Sello />
                 {app}
                 <Toaster />
             </TooltipProvider>

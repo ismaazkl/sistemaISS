@@ -4,18 +4,10 @@ import { useState } from 'react';
 import PendingInvitationsModal from '@/components/pending-invitations-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import { index as cursosIndex } from '@/routes/cursos';
 import { dashboard } from '@/routes';
 import { index as fichasIndex } from '@/routes/fichas';
-import type { DashboardInvitation } from '@/types';
+import type { DashboardInvitation, FichaDia } from '@/types';
 
 type Props = {
     pendingInvitations?: DashboardInvitation[];
@@ -24,22 +16,26 @@ type Props = {
         totalCursos: number;
         fichasDelMes: number;
     };
-    recentFichas: {
-        id: number;
-        estudiante: string;
-        curso: string | null;
-        fecha: string;
-    }[];
+    fichasPorDia: FichaDia[];
 };
 
 type TeamProps = {
     currentTeam: { slug: string } | null;
 };
 
+function formatDay(isoDate: string): string {
+    return new Date(`${isoDate}T00:00:00`).toLocaleDateString('es-ES', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
+}
+
 export default function Dashboard({
     pendingInvitations = [],
     stats,
-    recentFichas,
+    fichasPorDia,
 }: Props) {
     const { currentTeam } = usePage<TeamProps>().props;
     const teamSlug = currentTeam?.slug ?? '';
@@ -88,10 +84,11 @@ export default function Dashboard({
                     <div className="flex items-center justify-between gap-4 p-4">
                         <div>
                             <h2 className="text-base font-medium">
-                                Últimas fichas
+                                Fichas por día
                             </h2>
                             <p className="text-muted-foreground text-sm">
-                                Matrículas registradas recientemente
+                                Matrículas registradas recientemente, agrupadas
+                                por fecha
                             </p>
                         </div>
 
@@ -102,52 +99,55 @@ export default function Dashboard({
                         </Button>
                     </div>
 
-                    <div className="px-4 pb-4">
-                        <div className="overflow-hidden rounded-lg border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Estudiante</TableHead>
-                                        <TableHead>Curso</TableHead>
-                                        <TableHead className="text-right">
-                                            Fecha
-                                        </TableHead>
-                                    </TableRow>
-                                </TableHeader>
+                    <div className="flex flex-col gap-3 px-4 pb-4">
+                        {fichasPorDia.map((dia) => (
+                            <section
+                                key={dia.fecha}
+                                className="border-sidebar-border/70 dark:border-sidebar-border overflow-hidden rounded-lg border"
+                            >
+                                <header className="bg-muted/40 flex items-center justify-between gap-2 border-b px-3 py-2">
+                                    <span className="text-sm font-medium first-letter:uppercase">
+                                        {formatDay(dia.fecha)}
+                                    </span>
 
-                                <TableBody>
-                                    {recentFichas.map((ficha) => (
-                                        <TableRow key={ficha.id}>
-                                            <TableCell className="font-medium">
+                                    <Badge variant="secondary">
+                                        {dia.total}{' '}
+                                        {dia.total === 1 ? 'ficha' : 'fichas'}
+                                    </Badge>
+                                </header>
+
+                                <ul className="divide-border divide-y">
+                                    {dia.fichas.map((ficha) => (
+                                        <li
+                                            key={ficha.id}
+                                            className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
+                                        >
+                                            <span className="truncate font-medium">
                                                 {ficha.estudiante}
-                                            </TableCell>
+                                            </span>
 
-                                            <TableCell>
+                                            <span className="flex shrink-0 items-center gap-2">
                                                 <Badge variant="secondary">
                                                     {ficha.curso ?? '—'}
                                                 </Badge>
-                                            </TableCell>
 
-                                            <TableCell className="text-muted-foreground text-right">
-                                                {ficha.fecha}
-                                            </TableCell>
-                                        </TableRow>
+                                                {ficha.hora ? (
+                                                    <span className="text-muted-foreground font-mono text-xs tabular-nums">
+                                                        {ficha.hora}
+                                                    </span>
+                                                ) : null}
+                                            </span>
+                                        </li>
                                     ))}
+                                </ul>
+                            </section>
+                        ))}
 
-                                    {recentFichas.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={3}
-                                                className="text-muted-foreground h-24 text-center"
-                                            >
-                                                Todavía no hay fichas
-                                                registradas.
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : null}
-                                </TableBody>
-                            </Table>
-                        </div>
+                        {fichasPorDia.length === 0 ? (
+                            <p className="text-muted-foreground py-10 text-center text-sm">
+                                Todavía no hay fichas registradas.
+                            </p>
+                        ) : null}
                     </div>
                 </div>
             </div>

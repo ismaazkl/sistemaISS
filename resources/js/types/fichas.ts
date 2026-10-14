@@ -17,6 +17,17 @@ export type FichaFilters = {
     curso_id: number | null;
 };
 
+export type FichaDia = {
+    fecha: string;
+    total: number;
+    fichas: {
+        id: number;
+        estudiante: string;
+        curso: string | null;
+        hora: string | null;
+    }[];
+};
+
 export type FichaPagination = {
     data: Ficha[];
     links: {
